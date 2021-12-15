@@ -1,0 +1,59 @@
+dallas:
+  - pin: 2
+
+# Individual sensors
+sensor:
+  - platform: dallas
+    address: 0x1C0000031EDD2A28
+    name: "Tank Water Temprature"
+    id: hot_water_temperature
+
+climate:
+  - platform: thermostat
+    sensor: hot_water_temperature
+    name: Hot Water Boiler
+    id: hot_water_boiler
+    visual:
+      min_temperature: 40
+      max_temperature: 70
+      temperature_step: 1
+    min_heating_off_time: 300s
+    min_heating_run_time: 300s
+    min_idle_time: 30s
+    default_target_temperature_low: 40 °C
+
+    heat_action:
+      - switch.turn_on: b1l
+    idle_action:
+      - switch.turn_off: b1l
+
+switch:
+  - platform: gpio
+    pin: 4
+    name: "Heater 1"
+    id: b1l
+    
+binary_sensor:
+  - platform: gpio
+    pin: 
+      number: 0
+      mode: INPUT_PULLUP
+    internal: true
+    name: up_button
+    on_press:
+      then:
+        - climate.control:
+            id: hot_water_boiler
+            target_temperature: !lambda return (id(hot_water_boiler).target_temperature + 1.0);
+
+  - platform: gpio
+    pin: 
+      number: 5
+      mode: INPUT_PULLUP
+    internal: true
+    name: down_button
+    on_press:
+      then:
+        - climate.control:
+            id: hot_water_boiler
+            target_temperature: !lambda return (id(hot_water_boiler).target_temperature - 1.0);
